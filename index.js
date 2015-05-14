@@ -64,8 +64,7 @@ var Adapter = module.exports = function(config) {
  * @param {String} pw - Plain text user password
  * @param {Function} done - Callback function `function(err, user){}`
  */
- //Frank
-Adapter.prototype.saveUser = function(name, email, pw, type, done) {
+Adapter.prototype.save = function(name, email, pw, type, done) {
   var that = this;
 
   var now = moment().toDate();
@@ -75,7 +74,6 @@ Adapter.prototype.saveUser = function(name, email, pw, type, done) {
   var user = {
     name: name,
     email: email,
-    //Frank
     type: type,
     signupToken: uuid.v4(),
     signupTimestamp: now,
@@ -88,7 +86,7 @@ Adapter.prototype.saveUser = function(name, email, pw, type, done) {
     if (err) return done(err);
     user.salt = salt;
     user.derived_key = hash;
-    that.db.collection(that.collection.user).save(user, done);
+    that.db.collection(that.collection).save(user, done);
   });
 };
 
@@ -118,10 +116,10 @@ Adapter.prototype.saveUser = function(name, email, pw, type, done) {
  * @param {String} query - Corresponding value to `match`
  * @param {Function} done - Callback function `function(err, user){}`
  */
-Adapter.prototype.findUser = function(match, query, done) {
+Adapter.prototype.find = function(match, query, done) {
   var qry = {};
   qry[match] = query;
-  this.db.collection(this.collection.user).findOne(qry, done);
+  this.db.collection(this.collection).findOne(qry, done);
 };
 
 
@@ -148,13 +146,13 @@ Adapter.prototype.findUser = function(match, query, done) {
  * @param {Object} user - Existing user from db
  * @param {Function} done - Callback function `function(err, user){}`
  */
-Adapter.prototype.updateUser = function(user, done) {
+Adapter.prototype.update = function(user, done) {
   var that = this;
   // update user in db
-  that.db.collection(that.collection.user).save(user, function(err, res) {
+  that.db.collection(that.collection).save(user, function(err, res) {
     if (err) return done(err);
     // res is not the updated user object! -> find manually
-    that.db.collection(that.collection.user).findOne({_id: user._id}, done);
+    that.db.collection(that.collection).findOne({_id: user._id}, done);
   });
 };
 
@@ -173,52 +171,10 @@ Adapter.prototype.updateUser = function(user, done) {
  * @param {String} name - User name
  * @param {Function} done - Callback function `function(err, res){}`
  */
-Adapter.prototype.removeUser = function(name, done) {
-  this.db.collection(this.collection.user).remove({name: name}, function(err, numberOfRemovedDocs) {
+Adapter.prototype.remove = function(name, done) {
+  this.db.collection(this.collection).remove({name: name}, function(err, numberOfRemovedDocs) {
     if (err) return done(err);
     if (numberOfRemovedDocs === 0) return done(new Error('lockit - Cannot find user "' + name + '"'));
     done(null, true);
   });
-};
-
-Adapter.prototype.findInvitation = function(match, query, done) {
-  var qry = {};
-  qry[match] = query;
-  this.db.collection(this.collection.invitation).findOne(qry, done);
-};
-
-Adapter.prototype.updateInvitation = function(invitation, done) {
-  var that = this;
-  // update user in db
-  that.db.collection(that.collection.invitation).save(invitation, function(err, res) {
-    if (err) return done(err);
-    // res is not the updated user object! -> find manually
-    that.db.collection(that.collection.invitation).findOne({_id: invitation._id}, done);
-  });
-};
-
-Adapter.prototype.saveTeacher = function(user, done) {
-  var that = this;
-  var teacher = {
-    user: user._id
-  };
-  that.db.collection(that.collection.teacher).save(teacher, done);
-};
-
-Adapter.prototype.saveStudent = function(user, done) {
-  var that = this;
-  var student = {
-    user: user._id
-  };
-  that.db.collection(that.collection.student).save(student, done);
-};
-
-Adapter.prototype.saveClassStudentInstance = function(clazz, student, done) {
-  var that = this;
-  var classStudentInstance = {
-    clazz: clazz._id,
-    student: student._id,
-    status: 'pending'
-  };
-  that.db.collection(that.collection.student).save(student, done);
 };
